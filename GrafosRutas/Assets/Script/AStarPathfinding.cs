@@ -42,6 +42,28 @@ public class AStarPathfinding : MonoBehaviour
         gridSizeZ = Mathf.RoundToInt(terrainSize.z / nodeRadius);
     }
 
+    // Clase interna para representar un nodo en la cuadrícula
+    private class Node
+    {
+        public bool walkable;
+        public Vector3 worldPosition;
+        public int gridX;
+        public int gridZ;
+        public float gCost;
+        public float hCost;
+        public Node parent;
+
+        public float fCost => gCost + hCost;
+
+        public Node(bool _walkable, Vector3 _worldPosition, int _gridX, int _gridZ)
+        {
+            walkable = _walkable;
+            worldPosition = _worldPosition;
+            gridX = _gridX;
+            gridZ = _gridZ;
+        }
+    }
+
     // Crea la cuadrícula de nodos
     private void CrearCuadricula()
     {
@@ -194,21 +216,6 @@ public class AStarPathfinding : MonoBehaviour
         return closestNode;
     }
 
-    // Limita una posición a los límites del terreno
-    private Vector3 LimitarPosicionAlTerreno(Vector3 position)
-    {
-        if (terrain == null)
-        {
-            Debug.LogError("El terreno no está inicializado en LimitarPosicionAlTerreno.");
-            return position;
-        }
-
-        position.x = Mathf.Clamp(position.x, 0, terrainSize.x);
-        position.z = Mathf.Clamp(position.z, 0, terrainSize.z);
-        position.y = terrain.SampleHeight(position) + gridHeightOffset;
-        return position;
-    }
-
     // Reconstruye el camino desde el nodo inicial hasta el final
     private List<Vector3> ReconstruirCamino(Node startNode, Node endNode)
     {
@@ -223,24 +230,6 @@ public class AStarPathfinding : MonoBehaviour
 
         path.Reverse();
         return path;
-    }
-
-    // Dibuja el camino en la escena para visualización
-    private void DibujarCamino(List<Vector3> path)
-    {
-        if (path == null || path.Count < 2)
-            return;
-
-        for (int i = 0; i < path.Count - 1; i++)
-        {
-            Debug.DrawLine(path[i], path[i + 1], pathColor, pathDuration);
-        }
-
-        Vector3 textPosition = (path[0] + path[path.Count - 1]) / 2f + Vector3.up * 2f;
-        Debug.DrawLine(textPosition, textPosition + Vector3.up, Color.white, pathDuration);
-        Debug.DrawLine(textPosition + Vector3.up, textPosition + Vector3.up + Vector3.right * 2f, Color.white, pathDuration);
-        Debug.DrawLine(textPosition + Vector3.up + Vector3.right * 2f, textPosition + Vector3.right * 2f, Color.white, pathDuration);
-        Debug.DrawLine(textPosition + Vector3.right * 2f, textPosition, Color.white, pathDuration);
     }
 
     // Obtiene los nodos vecinos de un nodo dado
@@ -278,7 +267,6 @@ public class AStarPathfinding : MonoBehaviour
             return 14f * dstZ + 10f * (dstX - dstZ) + dstY;
         return 14f * dstX + 10f * (dstZ - dstX) + dstY;
     }
-
     private float CalcularLongitudRuta(List<Vector3> path)
     {
         float length = 0f;
@@ -289,27 +277,41 @@ public class AStarPathfinding : MonoBehaviour
         return length;
     }
 
-    // Clase interna para representar un nodo en la cuadrícula
-    private class Node
+
+    // Limita una posición a los límites del terreno
+    private Vector3 LimitarPosicionAlTerreno(Vector3 position)
     {
-        public bool walkable;
-        public Vector3 worldPosition;
-        public int gridX;
-        public int gridZ;
-        public float gCost;
-        public float hCost;
-        public Node parent;
-
-        public float fCost => gCost + hCost;
-
-        public Node(bool _walkable, Vector3 _worldPosition, int _gridX, int _gridZ)
+        if (terrain == null)
         {
-            walkable = _walkable;
-            worldPosition = _worldPosition;
-            gridX = _gridX;
-            gridZ = _gridZ;
+            Debug.LogError("El terreno no está inicializado en LimitarPosicionAlTerreno.");
+            return position;
         }
+
+        position.x = Mathf.Clamp(position.x, 0, terrainSize.x);
+        position.z = Mathf.Clamp(position.z, 0, terrainSize.z);
+        position.y = terrain.SampleHeight(position) + gridHeightOffset;
+        return position;
     }
+
+    
+    // Dibuja el camino en la escena para visualización
+    private void DibujarCamino(List<Vector3> path)
+    {
+        if (path == null || path.Count < 2)
+            return;
+
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            Debug.DrawLine(path[i], path[i + 1], pathColor, pathDuration);
+        }
+
+        Vector3 textPosition = (path[0] + path[path.Count - 1]) / 2f + Vector3.up * 2f;
+        Debug.DrawLine(textPosition, textPosition + Vector3.up, Color.white, pathDuration);
+        Debug.DrawLine(textPosition + Vector3.up, textPosition + Vector3.up + Vector3.right * 2f, Color.white, pathDuration);
+        Debug.DrawLine(textPosition + Vector3.up + Vector3.right * 2f, textPosition + Vector3.right * 2f, Color.white, pathDuration);
+        Debug.DrawLine(textPosition + Vector3.right * 2f, textPosition, Color.white, pathDuration);
+    }
+
 
     // Dibuja gizmos para visualizar la cuadrícula en el editor
     private void OnDrawGizmos()
