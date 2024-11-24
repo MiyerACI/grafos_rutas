@@ -74,7 +74,7 @@ public class CharacterController : MonoBehaviour
     // Actualización por frame
     private void Update()
     {
-        if (path != null && path.Count > 0)
+        if (path != null && path.Count > 0 && currentWaypointIndex < path.Count)
         {
             MoverSiguiendoCamino();
         }
@@ -87,6 +87,13 @@ public class CharacterController : MonoBehaviour
     // Mueve al personaje a lo largo del camino
     private void MoverSiguiendoCamino()
     {
+        if (currentWaypointIndex >= path.Count)
+        {
+            DetenerMovimiento();
+            Debug.Log("Destino alcanzado");
+            return;
+        }
+
         Vector3 targetPosition = path[currentWaypointIndex];
         Vector3 direction = (targetPosition - transform.position).normalized;
         direction.y = 0; // Mantener el movimiento horizontal
@@ -110,10 +117,17 @@ public class CharacterController : MonoBehaviour
         // Verificar si hemos llegado al waypoint actual
         if (Vector3.Distance(transform.position, targetPosition) < stoppingDistance)
         {
+            Debug.Log($"Llegada al waypoint {currentWaypointIndex}");
             currentWaypointIndex++;
             if (currentWaypointIndex >= path.Count)
             {
                 DetenerMovimiento();
+                Debug.Log("Destino alcanzado");
+            }
+            else
+            {
+                float distanciaAlSiguiente = Vector3.Distance(targetPosition, path[currentWaypointIndex]);
+                Debug.Log($"Distancia al siguiente waypoint: {distanciaAlSiguiente:F2} unidades (metros)");
             }
         }
     }
